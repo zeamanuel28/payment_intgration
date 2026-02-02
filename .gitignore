@@ -1,0 +1,17 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Environment variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Brain/Agent artifacts
+.gemini/
+.agent/
