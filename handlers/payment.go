@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"payment-integration/models"
 	"payment-integration/service"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type PaymentHandler struct {
@@ -17,15 +18,21 @@ func NewPaymentHandler(service service.PaymentGateway) *PaymentHandler {
 	return &PaymentHandler{Service: service}
 }
 
-func (h *PaymentHandler) HandlePay(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
+// HandlePay godoc
+// @Summary      Initiate a payment
+// @Description  Initiates a payment transaction with Chapa
+// @Tags         payments
+// @Accept       json
+// @Produce      json
+// @Param        transaction  body      models.Transaction  true  "Transaction Request"
+// @Success      200          {object}  models.ChapaResponse
+// @Failure      400          {object}  map[string]string
+// @Failure      500          {object}  map[string]string
+// @Router       /pay [post]
+func (h *PaymentHandler) HandlePay(c *gin.Context) {
 	var req models.Transaction
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
@@ -36,32 +43,36 @@ func (h *PaymentHandler) HandlePay(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.Service.InitiatePayment(req)
 	if err != nil {
-		http.Error(w, "Failed to initiate payment: "+err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate payment: " + err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	c.JSON(http.StatusOK, resp)
 }
 
-func (h *PaymentHandler) HandleVerify(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	txRef := r.URL.Query().Get("tx_ref")
+// HandleVerify godoc
+// @Summary      Verify a payment
+// @Description  Verifies a payment transaction using Chapa
+// @Tags         payments
+// @Accept       json
+// @Produce      json
+// @Param        tx_ref  query     string  true  "Transaction Reference"
+// @Success      200     {object}  models.ChapaVerifyResponse
+// @Failure      400     {object}  map[string]string
+// @Failure      500     {object}  map[string]string
+// @Router       /verify [get]
+func (h *PaymentHandler) HandleVerify(c *gin.Context) {
+	txRef := c.Query("tx_ref")
 	if txRef == "" {
-		http.Error(w, "tx_ref is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "tx_ref is required"})
 		return
 	}
 
 	resp, err := h.Service.VerifyPayment(txRef)
 	if err != nil {
-		http.Error(w, "Failed to verify payment: "+err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify payment: " + err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	c.JSON(http.StatusOK, resp)
 }

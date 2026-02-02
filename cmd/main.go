@@ -2,14 +2,29 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 
 	"payment-integration/handlers"
+	"payment-integration/router"
 	"payment-integration/service"
 
 	"github.com/joho/godotenv"
 )
+
+// @title           Payment Integration API
+// @version         1.0
+// @description     This is a payment integration service using Chapa.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host            localhost:8080
+// @BasePath        /
 
 func main() {
 	// Load environment variables
@@ -22,9 +37,7 @@ func main() {
 	paymentHandler := handlers.NewPaymentHandler(chapaService)
 
 	// Set up routes
-	http.HandleFunc("/pay", paymentHandler.HandlePay)
-	http.HandleFunc("/verify", paymentHandler.HandleVerify)
-	http.HandleFunc("/webhook", paymentHandler.HandleWebhook)
+	mux := router.SetupRoutes(paymentHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -32,7 +45,7 @@ func main() {
 	}
 
 	log.Printf("Server starting on port %s...", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := mux.Run(":" + port); err != nil {
 		log.Fatal(err)
 	}
 }

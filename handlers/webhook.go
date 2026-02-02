@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // ChapaWebhookRequest represents the payload sent by Chapa webhook
@@ -14,18 +15,13 @@ type ChapaWebhookRequest struct {
 	// Add other fields as needed
 }
 
-func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
+func (h *PaymentHandler) HandleWebhook(c *gin.Context) {
 	// Verify signature if Chapa provides one (TODO)
-	// signature := r.Header.Get("Chapa-Signature")
+	// signature := c.GetHeader("Chapa-Signature")
 
 	var payload ChapaWebhookRequest
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
@@ -34,5 +30,5 @@ func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	// Update transaction status in database (mocked)
 	// err := h.Service.UpdateTransactionStatus(payload.TxRef, payload.Status)
 
-	w.WriteHeader(http.StatusOK)
+	c.Status(http.StatusOK)
 }

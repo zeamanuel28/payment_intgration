@@ -1,0 +1,141 @@
+basePath: /
+definitions:
+  models.ChapaResponse:
+    properties:
+      data:
+        properties:
+          checkout_url:
+            type: string
+        type: object
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.ChapaVerifyResponse:
+    properties:
+      data:
+        properties:
+          amount:
+            type: number
+          currency:
+            type: string
+          payment_method:
+            type: string
+          status:
+            type: string
+          tx_ref:
+            type: string
+        type: object
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.Transaction:
+    properties:
+      amount:
+        type: number
+      created_at:
+        type: string
+      currency:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      payment_method:
+        type: string
+      status:
+        type: string
+      tx_ref:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a payment integration service using Chapa.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Payment Integration API
+  version: "1.0"
+paths:
+  /pay:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a payment transaction with Chapa
+      parameters:
+      - description: Transaction Request
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/models.Transaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ChapaResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Initiate a payment
+      tags:
+      - payments
+  /verify:
+    get:
+      consumes:
+      - application/json
+      description: Verifies a payment transaction using Chapa
+      parameters:
+      - description: Transaction Reference
+        in: query
+        name: tx_ref
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ChapaVerifyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify a payment
+      tags:
+      - payments
+swagger: "2.0"
